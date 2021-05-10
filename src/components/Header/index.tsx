@@ -1,6 +1,7 @@
 import { SignInButton } from '../SignInButton'
 
-import styles from './stypes.module.scss'
+import './'
+import styles from './styles.module.scss'
 
 export function Header() {
   return (
