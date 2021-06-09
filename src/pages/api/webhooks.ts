@@ -3,6 +3,7 @@ import { Readable } from "stream";
 import Stripe from "stripe";
 
 import { stripe } from "../../services/stripe";
+import { saveSubscription } from "./_lib/mesageSubscription";
 
 async function buffer(readable: Readable) {
   const chunks = [];
@@ -42,7 +43,25 @@ export default async (request: NextApiRequest, response: NextApiResponse) => {
     const { type } = event
 
     if (relevantEvents.has(type)) {
-      console.log('evento', event)
+      try {
+        switch (type) {
+          case 'checkout.session.completed':
+            const checkoutSession = event.data.object as Stripe.Checkout.Session
+
+            await saveSubscription(
+              checkoutSession.subscription.toString(),
+              checkoutSession.customer.toString()  
+            )
+            break;
+        
+          default:
+            throw new Error('Unhandled event')
+        }
+      } catch {
+        return response.json({
+          error: 'Webhook handle field.'
+        })
+      }
     }
 
     response.json({
