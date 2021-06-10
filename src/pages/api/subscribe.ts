@@ -5,7 +5,7 @@ import { query as q } from 'faunadb'
 import { stripe } from "../../services/stripe";
 import { fauna } from "../../services/fauna";
 
-type User = {
+interface User {
   ref: {
     id: string;
   };
