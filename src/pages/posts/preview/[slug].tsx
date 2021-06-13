@@ -59,7 +59,7 @@ export default function PostPreview({ post }: PostPreviewProps) {
   )
 }
 
-export const getStaticPaths = () => {
+export const getStaticPaths: GetStaticPaths = async () => {
   return {
     paths: [],
     fallback: 'blocking'
