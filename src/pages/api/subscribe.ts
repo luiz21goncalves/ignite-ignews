@@ -1,9 +1,10 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/client";
-import { query as q } from 'faunadb'
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getSession } from 'next-auth/client';
 
-import { stripe } from "../../services/stripe";
-import { fauna } from "../../services/fauna";
+import { query as q } from 'faunadb';
+
+import { stripe } from '../../services/stripe';
+import { fauna } from '../../services/fauna';
 
 interface User {
   ref: {
@@ -11,43 +12,35 @@ interface User {
   };
   data: {
     stipe_customer_id: string;
-  }
+  };
 }
 
+// eslint-disable-next-line import/no-anonymous-default-export
 export default async (request: NextApiRequest, response: NextApiResponse) => {
-  if(request.method === 'POST') {
-    const session = await getSession({ req: request })
+  if (request.method === 'POST') {
+    const session = await getSession({ req: request });
 
     const user = await fauna.query<User>(
-      q.Get(
-        q.Match(
-          q.Index('user_by_email'),
-          q.Casefold(session.user.email)
-        )
-      )
-    )
+      q.Get(q.Match(q.Index('user_by_email'), q.Casefold(session.user.email))),
+    );
 
-    let customerId = user.data.stipe_customer_id
+    let customerId = user.data.stipe_customer_id;
 
-    if (!customerId) { 
+    if (!customerId) {
       const stripeCustomer = await stripe.customers.create({
         email: session.user.email,
-      })
+      });
 
       await fauna.query(
-        q.Update(
-          q.Ref(q.Collection('users'), user.ref.id),
-          {
-            data: {
-              stripe_customer_id: stripeCustomer.id
-            }
-          }
-        )
-      )
-  
-      customerId = stripeCustomer.id
-    }
+        q.Update(q.Ref(q.Collection('users'), user.ref.id), {
+          data: {
+            stripe_customer_id: stripeCustomer.id,
+          },
+        }),
+      );
 
+      customerId = stripeCustomer.id;
+    }
 
     const stripeCheckoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -57,19 +50,19 @@ export default async (request: NextApiRequest, response: NextApiResponse) => {
         {
           price: 'price_1Ipj8fGUIpBvnFz7D5PaimaM',
           quantity: 1,
-        }
+        },
       ],
       mode: 'subscription',
       allow_promotion_codes: true,
       success_url: process.env.STRIPE_SUCCESS_URL,
       cancel_url: process.env.STRIPE_CANCEL_URL,
-    })
+    });
 
-    return response.status(200).json({
+    response.status(200).json({
       sessionId: stripeCheckoutSession.id,
-    })
+    });
   } else {
-    response.setHeader('allow', 'POST')
-    response.status(405).end('Method not allowed')
+    response.setHeader('allow', 'POST');
+    response.status(405).end('Method not allowed');
   }
-}
+};

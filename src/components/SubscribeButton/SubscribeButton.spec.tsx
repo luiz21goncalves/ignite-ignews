@@ -1,62 +1,64 @@
-import { render, screen, fireEvent } from '@testing-library/react'
-import { useSession, signIn } from 'next-auth/client'
-import { useRouter } from 'next/router'
-import { mocked } from 'ts-jest/utils'
+import { useSession, signIn } from 'next-auth/client';
+import { useRouter } from 'next/router';
 
-import { SubscribeButton } from '.'
+import { render, screen, fireEvent } from '@testing-library/react';
+import { mocked } from 'ts-jest/utils';
 
-jest.mock('next-auth/client')
-jest.mock('next/router')
+import { SubscribeButton } from '.';
+
+jest.mock('next-auth/client');
+jest.mock('next/router');
 
 describe('SubscribeButton component', () => {
   it('renders correctly', () => {
-    const useSessionMocked = mocked(useSession)
-    useSessionMocked.mockReturnValueOnce([null, false])
+    const useSessionMocked = mocked(useSession);
+    useSessionMocked.mockReturnValueOnce([null, false]);
 
-    render(<SubscribeButton />)
+    render(<SubscribeButton />);
 
-    expect(screen.getByText(/subscribe now/i)).toBeInTheDocument()
-  })
+    expect(screen.getByText(/subscribe now/i)).toBeInTheDocument();
+  });
 
   it('redirect to sign in when not authenticated', () => {
-    const useSessionMocked = mocked(useSession)
-    useSessionMocked.mockReturnValueOnce([null, false])
+    const useSessionMocked = mocked(useSession);
+    useSessionMocked.mockReturnValueOnce([null, false]);
 
-    const signInMocked = mocked(signIn)
+    const signInMocked = mocked(signIn);
 
-    render(<SubscribeButton/>)
+    render(<SubscribeButton />);
 
-    const subscribeButton = screen.getByText(/subscribe now/i)
+    const subscribeButton = screen.getByText(/subscribe now/i);
 
-    fireEvent.click(subscribeButton)
+    fireEvent.click(subscribeButton);
 
-    expect(signInMocked).toHaveBeenCalled()
-  })
+    expect(signInMocked).toHaveBeenCalled();
+  });
 
   it('redirects to posts when user already has a subscription', () => {
-    const useSessionMocked = mocked(useSession)
+    const useSessionMocked = mocked(useSession);
     useSessionMocked.mockReturnValueOnce([
-      { 
+      {
         user: { name: 'John Doe', email: 'example@johndoe.com' },
         expires: 'fake-expires',
-        activeSubscription: 'fake-active-subscription'
-       }, 
-      false
-    ])
+        activeSubscription: 'fake-active-subscription',
+      },
+      false,
+    ]);
 
-    const pushMock = jest.fn()
+    const pushMock = jest.fn();
 
-    const useRouterMocked = mocked(useRouter)
+    const useRouterMocked = mocked(useRouter);
     useRouterMocked.mockReturnValueOnce({
       push: pushMock,
-    } as any)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
 
-    render(<SubscribeButton/>)
+    render(<SubscribeButton />);
 
-    const subscribeButton = screen.getByText(/subscribe now/i)
+    const subscribeButton = screen.getByText(/subscribe now/i);
 
-    fireEvent.click(subscribeButton)
+    fireEvent.click(subscribeButton);
 
-    expect(pushMock).toHaveBeenCalledWith('/posts')
-  })
-})
+    expect(pushMock).toHaveBeenCalledWith('/posts');
+  });
+});
